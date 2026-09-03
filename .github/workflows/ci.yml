@@ -1,32 +1,61 @@
-name: CI Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
     branches:
       - main
+
   pull_request:
     branches:
       - main
 
 jobs:
-  build:
+  build-test-push:
+
     runs-on: ubuntu-latest
 
     steps:
+
+      # 1. Download repository code
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 2. Check project files
       - name: Check project files
         run: ls -la
 
+      # 3. Build Docker image
       - name: Build Docker image
-        run: docker build -t cloud-devops-app:latest .
+        run: |
+          docker build \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/cloud-devops-app:latest .
 
+      # 4. Run container for testing
       - name: Test Docker image
         run: |
-          docker run -d --name test-container -p 8080:80 cloud-devops-app:latest
+          docker run -d \
+            --name test-container \
+            -p 8080:80 \
+            ${{ secrets.DOCKERHUB_USERNAME }}/cloud-devops-app:latest
+
           sleep 5
+
           curl http://localhost:8080
 
+      # 5. Stop test container
       - name: Stop test container
-        run: docker stop test-container
+        run: |
+          docker stop test-container
+
+      # 6. Login to Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 7. Push Docker image to Docker Hub
+      - name: Push Docker image
+        run: |
+          docker push \
+            ${{ secrets.DOCKERHUB_USERNAME }}/cloud-devops-app:latest
