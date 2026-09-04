@@ -84,3 +84,8 @@ jobs:
               mendarohithkumar/cloud-devops-app:latest
 
             docker ps
+      # 10. Verify deployment
+      - name: Verify deployment
+        run: |
+          sleep 10
+          curl http://${{ secrets.EC2_HOST }}
