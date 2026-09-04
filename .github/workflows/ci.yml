@@ -57,13 +57,20 @@ jobs:
           docker push \
             ${{ secrets.DOCKERHUB_USERNAME }}/cloud-devops-app:latest
 
-      # 8. Deploy application to EC2
+      # 8. Prepare SSH key
+      - name: Prepare SSH key
+        shell: bash
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > /tmp/ec2_key
+          chmod 600 /tmp/ec2_key
+
+      # 9. Deploy application to EC2
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key_path: /tmp/ec2_key
           script: |
             docker pull mendarohithkumar/cloud-devops-app:latest
 
